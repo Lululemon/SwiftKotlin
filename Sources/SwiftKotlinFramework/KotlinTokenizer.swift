@@ -109,15 +109,15 @@ public class KotlinTokenizer: SwiftTokenizer {
             let dataObjectIndex = tokens.firstIndex(where: { $0.value == "DataObject"})
             if (dataObjectIndex != nil && dataObjectIndex! < bodyIndex) {
                 // MOP-422
-                let declTokens = indent([declaration.newToken(.linebreak, "\n"),
+                let constructorTokens = indent([declaration.newToken(.linebreak, "\n"),
                                          declaration.newToken(.space, "constructor(modelContext: ModelContext?, uid: String, source:DataObjectSource?) : super(modelContext, uid, source)"),
                                          declaration.newToken(.linebreak, "\n"),
                                          declaration.newToken(.space, "constructor(contextBearer: DataObject? = null) : super(contextBearer)"),
                                          declaration.newToken(.linebreak, "\n")])
             
-                tokens.insert(contentsOf: declTokens, at: bodyIndex + 1)
+                tokens.insert(contentsOf: constructorTokens, at: bodyIndex + 1)
                 
-                bodyStart! += declTokens.count
+                bodyStart! += constructorTokens.count
             }
         }
         
