@@ -101,11 +101,31 @@ public class KotlinTokenizer: SwiftTokenizer {
         declaration.lexicalParent.map(newClass.setLexicalParent)
         newClass.setSourceRange(declaration.sourceRange)
         var tokens = super.tokenize(newClass)
-        if !staticMembers.isEmpty, let bodyStart = tokens.firstIndex(where: { $0.value == "{"}) {
+        
+        var bodyStart = tokens.firstIndex(where: { $0.value == "{"})
+                
+        if let bodyIndex = bodyStart {
+            // MOP-421
+            let dataObjectIndex = tokens.firstIndex(where: { $0.value == "DataObject"})
+            if (dataObjectIndex != nil && dataObjectIndex! < bodyIndex) {
+                // MOP-422
+                let constructorTokens = indent([declaration.newToken(.linebreak, "\n"),
+                                         declaration.newToken(.space, "constructor(modelContext: ModelContext?, uid: String, source:DataObjectSource?) : super(modelContext, uid, source)"),
+                                         declaration.newToken(.linebreak, "\n"),
+                                         declaration.newToken(.space, "constructor(contextBearer: DataObject? = null) : super(contextBearer)"),
+                                         declaration.newToken(.linebreak, "\n")])
+            
+                tokens.insert(contentsOf: constructorTokens, at: bodyIndex + 1)
+                
+                bodyStart! += constructorTokens.count
+            }
+        }
+        
+        if !staticMembers.isEmpty, bodyStart != nil {
             let companionTokens = indent(tokenizeCompanion(staticMembers, node: declaration))
                 .prefix(with: declaration.newToken(.linebreak, "\n"))
                 .suffix(with: declaration.newToken(.linebreak, "\n"))
-            tokens.insert(contentsOf: companionTokens, at: bodyStart + 1)
+            tokens.insert(contentsOf: companionTokens, at: bodyStart! + 1)
         }
 
         return tokens
