@@ -355,6 +355,20 @@ public class KotlinTokenizer: SwiftTokenizer {
             }
         }
 
+        // MOP-424: Repair enums that being with "."
+        var removeIndices = [Int]()
+        for (index, token) in bodyTokens.enumerated() {
+            if (token.value == "."){
+                if (index==0 || bodyTokens[index-1].kind != Token.Kind.identifier){
+                    removeIndices.append(index)
+                }
+            }
+        }
+        let reversed : [Int] = removeIndices.reversed()
+        for reversedIndex : Int in reversed {
+            bodyTokens.remove(at: reversedIndex)
+        }
+                
         return [
             attrsTokenGroups.joined(token: spaceToken),
             modifierTokenGroups.joined(token: spaceToken),
