@@ -730,9 +730,24 @@ public class KotlinTokenizer: SwiftTokenizer {
     }
     
     open override func tokenize(_ expression: FunctionCallExpression.Argument, node: ASTNode) -> [Token] {
-        return super.tokenize(expression, node: node)
+        var tokenizedArgument = super.tokenize(expression, node: node)
             .replacing({ $0.value == ": " && $0.kind == .delimiter },
                        with: [expression.newToken(.delimiter, " = ", node)])
+                
+        // MOP-427: Remove argument names
+        var removeIndices = [Int]()
+        for (index, token) in tokenizedArgument.enumerated() {
+            if (token.value == " = " && token.kind == .delimiter){
+                removeIndices.append(index-1)
+                removeIndices.append(index)
+            }
+        }
+        let reversed : [Int] = removeIndices.reversed()
+        for reversedIndex : Int in reversed {
+            tokenizedArgument.remove(at: reversedIndex)
+        }
+        
+        return tokenizedArgument
     }
 
     open override func tokenize(_ expression: ClosureExpression) -> [Token] {
