@@ -110,13 +110,19 @@ public class KotlinTokenizer: SwiftTokenizer {
             if (dataObjectIndex != nil && dataObjectIndex! < bodyIndex) {
                 // MOP-422
                 let constructorTokens = indent([declaration.newToken(.linebreak, "\n"),
-                                         declaration.newToken(.space, "constructor(modelContext: ModelContext?, uid: String, source:DataObjectSource?) : super(modelContext, uid, source)"),
-                                         declaration.newToken(.linebreak, "\n"),
-                                         declaration.newToken(.space, "constructor(contextBearer: DataObject? = null) : super(contextBearer)"),
-                                         declaration.newToken(.linebreak, "\n")])
-            
-                tokens.insert(contentsOf: constructorTokens, at: bodyIndex + 1)
+                                                declaration.newToken(.space, "constructor(modelContext: ModelContext?, uid: String, source:DataObjectSource?) : super(modelContext, uid, source)"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.space, "constructor(contextBearer: DataObject? = null) : super(contextBearer)"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.space, "override fun init(modelContext: ModelContext?, uid: String, source: DataObjectSource?): \(newClass.name) {"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.space, "return \(newClass.name)(modelContext, uid, source)"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.space, "}"),
+                                                declaration.newToken(.linebreak, "\n")])
                 
+                tokens.insert(contentsOf: constructorTokens, at: bodyIndex + 1)
                 bodyStart! += constructorTokens.count
             }
         }
@@ -390,7 +396,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 indent(
                     getterTokens +
                     tokenize(codeBlock)
-                )
+                ) + body.newToken(.linebreak, "\n", node) //MOP-468: variable declaration newline
+            
             
         case let .willSetDidSetBlock(name, typeAnnotation, initExpr, block):
             let newName = block.willSetClause?.name ?? .name("newValue")
@@ -429,6 +436,7 @@ public class KotlinTokenizer: SwiftTokenizer {
         let getterTokens = tokenize(block.getter, node: node)
             .replacing({ $0.kind == .keyword && $0.value == "get" }, with: [block.newToken(.keyword, "get()", node)])
         let setterTokens = block.setter.map { tokenize($0, node: node) } ?? []
+                
         return [
             indent(getterTokens),
             indent(setterTokens),
@@ -576,6 +584,7 @@ public class KotlinTokenizer: SwiftTokenizer {
                     indent(statements) +
                     [linebreak, statement.newToken(.endOfScope, "}", node)]
             }
+            
             return conditions + separatorTokens + statements
 
         case .default(let stmts):
@@ -612,7 +621,14 @@ public class KotlinTokenizer: SwiftTokenizer {
         var tokens = super.tokenize(patternWithoutTuple, node: node)
         if tokens.first?.value == "." {
             tokens.remove(at: 0)
+            // MOP-468: Uppercase the first letter of enum.
+            let oldToken = tokens.first
+            if(oldToken != nil){
+                tokens.remove(at: 0)
+                tokens.insert(pattern.newToken(oldToken!.kind, oldToken!.value.firstUppercased, node), at: 0) 
+            }
         }
+        
         return prefix + tokens
     }
 
@@ -661,7 +677,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             return [expression.newToken(.string, conversionUnicodeString(rawText, node: expression))]
         case .array(let exprs):
             let isGenericTypeInfo = (expression.lexicalParent as? FunctionCallExpression)?.postfixExpression.textDescription.starts(with: "[") == true
-            return expression.newToken(.identifier, "listOf") +
+            return expression.newToken(.identifier, "mutableListOf") + // MOP-468: listOf to mutableListOf
                 expression.newToken(.startOfScope, isGenericTypeInfo ? "<" : "(") +
                 exprs.map { tokenize($0) }.joined(token: expression.newToken(.delimiter, ", ")) +
                 expression.newToken(.endOfScope, isGenericTypeInfo ? ">" : ")")
@@ -726,6 +742,33 @@ public class KotlinTokenizer: SwiftTokenizer {
                 expression.newToken(.keyword, "invoke")
             ], at: startIndex)
         }
+        
+        // MOP-468: Remove "helper" function calls
+        var removeIndices = [Int]()
+        for (index, token) in tokens.enumerated() {
+            if (token.value == "helper"){
+                removeIndices.append(index-1)
+                removeIndices.append(index)
+            }
+        }
+        let reversed : [Int] = removeIndices.reversed()
+        for reversedIndex : Int in reversed {
+            tokens.remove(at: reversedIndex)
+        }
+        
+        // MOP-468: "Log" to "Logger"
+        var removeIndicesLog = [Int]()
+        for (index, token) in tokens.enumerated() {
+            if (token.value == "Log"){
+                removeIndicesLog.append(index)
+            }
+        }
+        let reversedLog : [Int] = removeIndicesLog.reversed()
+        for reversedIndex : Int in reversedLog {
+            tokens.remove(at: reversedIndex)
+            tokens.insert(expression.newToken(.identifier, "Logger"), at: reversedIndex)
+        }
+        
         return tokens
     }
     
@@ -745,6 +788,12 @@ public class KotlinTokenizer: SwiftTokenizer {
         let reversed : [Int] = removeIndices.reversed()
         for reversedIndex : Int in reversed {
             tokenizedArgument.remove(at: reversedIndex)
+        }
+        
+        // MOP-468: Remove argument names
+        let first = tokenizedArgument.first
+        if (first?.value == "."){
+            tokenizedArgument.remove(at: 0)
         }
         
         return tokenizedArgument
@@ -1211,4 +1260,8 @@ public class KotlinTokenizer: SwiftTokenizer {
 public typealias InvertedConditionList = [InvertedCondition]
 public struct InvertedCondition: ASTTokenizable {
     public let condition: Condition
+}
+
+extension StringProtocol {
+    var firstUppercased: String { prefix(1).uppercased() + dropFirst() }
 }
