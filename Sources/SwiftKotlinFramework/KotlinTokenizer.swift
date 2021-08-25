@@ -92,7 +92,7 @@ public class KotlinTokenizer: SwiftTokenizer {
         let newClass = ClassDeclaration(
             attributes: declaration.attributes,
             accessLevelModifier: declaration.accessLevelModifier,
-            isFinal: declaration.isFinal,
+            isFinal: false, // MOP-499 remove final class modifier
             name: declaration.name,
             genericParameterClause: declaration.genericParameterClause,
             typeInheritanceClause: declaration.typeInheritanceClause,
@@ -364,9 +364,14 @@ public class KotlinTokenizer: SwiftTokenizer {
         // MOP-424: Repair enums that being with "."
         var removeIndices = [Int]()
         for (index, token) in bodyTokens.enumerated() {
-            if (token.value == "."){
-                if (index==0 || bodyTokens[index-1].kind != Token.Kind.identifier){
+            if (token.value == ".") {
+                if (index==0 || bodyTokens[index-1].kind == Token.Kind.startOfScope || bodyTokens[index-1].kind == Token.Kind.space || bodyTokens[index-1].kind == Token.Kind.delimiter){
                     removeIndices.append(index)
+                    
+                    let capitalIndex = index+1 // MOP-468 Capitalize enum name
+                    let oldToken = bodyTokens[capitalIndex]
+                    bodyTokens.remove(at: capitalIndex)
+                    bodyTokens.insert(declaration.newToken(oldToken.kind, oldToken.value.firstUppercased), at: capitalIndex)
                 }
             }
         }
@@ -531,6 +536,7 @@ public class KotlinTokenizer: SwiftTokenizer {
                 Array(declarationTokens.dropLast()),
                 [statement.newToken(.symbol, "?:")],
                 tokenize(body),
+                [statement.newToken(.linebreak, "\n")], // MOP-499 newline
             ].joined(token: statement.newToken(.space, " "))
         } else {
             let invertedConditions = statement.conditionList.map(InvertedCondition.init)
@@ -544,7 +550,8 @@ public class KotlinTokenizer: SwiftTokenizer {
 
     open override func tokenize(_ statement: IfStatement) -> [Token] {
         return tokenizeDeclarationConditions(statement.conditionList, node: statement) +
-            super.tokenize(statement)
+            super.tokenize(statement) +
+            [statement.newToken(.linebreak, "\n")] // MOP-499 newline
     }
 
     open override func tokenize(_ statement: SwitchStatement) -> [Token] {
@@ -564,7 +571,8 @@ public class KotlinTokenizer: SwiftTokenizer {
             tokenize(statement.expression)
                 .prefix(with: statement.newToken(.startOfScope, "("))
                 .suffix(with: statement.newToken(.endOfScope, ")")),
-            casesTokens
+            casesTokens,
+            [statement.newToken(.linebreak, "\n")]
             ].joined(token: statement.newToken(.space, " "))
     }
 

@@ -21,7 +21,7 @@ extension KotlinTokenizer {
         if declaration.lexicalParentAccessLevelModifier?.toKotlin() != nil {
             return declaration
         }
-        return declaration.copyWith(accessLevelModifier: .internal)
+        return declaration.copyWith(accessLevelModifier: nil) // MOP-499 allow for empty modifier
     }
 }
 
@@ -31,7 +31,7 @@ private extension AccessLevelModifier {
         case .private, .fileprivate:
             return .private
         case .internal:
-            return .internal
+            return nil // MOP-499
         case .public:
             return nil
         case .open:
@@ -52,7 +52,7 @@ private extension Declaration {
             copy = ClassDeclaration(
                 attributes: decl.attributes,
                 accessLevelModifier: accessLevelModifier,
-                isFinal: decl.isFinal,
+                isFinal: false, // MOP-499 remove final class modifier
                 name: decl.name,
                 genericParameterClause: decl.genericParameterClause,
                 typeInheritanceClause: decl.typeInheritanceClause,
