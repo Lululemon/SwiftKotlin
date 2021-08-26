@@ -764,17 +764,21 @@ public class KotlinTokenizer: SwiftTokenizer {
             tokens.remove(at: reversedIndex)
         }
         
-        // MOP-468: "Log" to "Logger"
-        var removeIndicesLog = [Int]()
+        // MOP-468: "Log" to "Logger" Replace function names
+        var removeIndicesLog = [(Int, String)]()
         for (index, token) in tokens.enumerated() {
             if (token.value == "Log"){
-                removeIndicesLog.append(index)
+                removeIndicesLog.append((index, "Logger"))
+            } else if (token.value == "forceEmptyToNil") {
+                removeIndicesLog.append((index, "forceEmptyToNull"))
+            } else if (token.value == "emptyStringAsNilEquivalent") {
+                removeIndicesLog.append((index, "needsToUpdate"))
             }
         }
-        let reversedLog : [Int] = removeIndicesLog.reversed()
-        for reversedIndex : Int in reversedLog {
-            tokens.remove(at: reversedIndex)
-            tokens.insert(expression.newToken(.identifier, "Logger"), at: reversedIndex)
+        let reversedLog : [(Int, String)] = removeIndicesLog.reversed()
+        for tuple in reversedLog {
+            tokens.remove(at: tuple.0)
+            tokens.insert(expression.newToken(.identifier, tuple.1), at: tuple.0)
         }
         
         return tokens
@@ -798,10 +802,15 @@ public class KotlinTokenizer: SwiftTokenizer {
             tokenizedArgument.remove(at: reversedIndex)
         }
         
-        // MOP-468: Remove argument names
+        // MOP-468: Fix enum argument, uppercase first letter of enum
         let first = tokenizedArgument.first
         if (first?.value == "."){
             tokenizedArgument.remove(at: 0)
+            let oldToken = tokenizedArgument.first
+            if(oldToken != nil){
+                tokenizedArgument.remove(at: 0)
+                tokenizedArgument.insert(expression.newToken(oldToken!.kind, oldToken!.value.firstUppercased, node), at: 0)
+            }
         }
         
         return tokenizedArgument
