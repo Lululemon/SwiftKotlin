@@ -653,6 +653,14 @@ public class KotlinTokenizer: SwiftTokenizer {
     open override func tokenize(_ expression: ExplicitMemberExpression) -> [Token] {
         switch expression.kind {
         case let .namedType(postfixExpr, identifier):
+            
+            var checkedIdentifier = identifier.textDescription
+            if (checkedIdentifier == "isNilOrEmpty") {
+                checkedIdentifier = "isNullOrEmpty()"
+            } else if (checkedIdentifier == "sharedInstance") {
+                checkedIdentifier = "getInstance()"
+            }
+            
             let postfixTokens = tokenize(postfixExpr)
             var delimiters = [expression.newToken(.delimiter, ".")]
 
@@ -662,7 +670,7 @@ public class KotlinTokenizer: SwiftTokenizer {
                 }) {
                 delimiters = delimiters.prefix(with: expression.newToken(.symbol, "?"))
             }
-            return postfixTokens + delimiters + expression.newToken(.identifier, identifier)
+            return postfixTokens + delimiters + expression.newToken(.identifier, checkedIdentifier)
         default:
             return super.tokenize(expression)
         }
@@ -773,7 +781,15 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "forceEmptyToNull"))
             } else if (token.value == "emptyStringAsNilEquivalent") {
                 removeIndicesLog.append((index, "needsToUpdate"))
+            } else if (token.value == "isNilOrEmpty") {
+                removeIndicesLog.append((index, "isNullOrEmpty()"))
+            } else if (token.value == "sharedInstance") {
+                removeIndicesLog.append((index, "getInstance()"))
+            } else if (token.value == "compare") {
+                removeIndicesLog.append((index, "compareTo"))
             }
+            
+            
         }
         let reversedLog : [(Int, String)] = removeIndicesLog.reversed()
         for tuple in reversedLog {
