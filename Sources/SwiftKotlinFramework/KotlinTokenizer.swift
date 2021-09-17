@@ -39,8 +39,27 @@ public class KotlinTokenizer: SwiftTokenizer {
         ].joined(token: declaration.newToken(.space, " "))
         
         var signatureTokens = tokenize(declaration.signature, node: declaration)
-        let bodyTokens = declaration.body.map(tokenize) ?? []
-
+        var bodyTokens = declaration.body.map(tokenize) ?? []
+        
+        // MOP-424: Repair enums that being with "."
+        var removeIndices = [Int]()
+        for (index, token) in bodyTokens.enumerated() {
+            if (token.value == ".") {
+                if (index==0 || bodyTokens[index-1].kind == Token.Kind.startOfScope || bodyTokens[index-1].kind == Token.Kind.space || bodyTokens[index-1].kind == Token.Kind.delimiter || bodyTokens[index-1].value == " = "){
+                    removeIndices.append(index)
+                    
+                    let capitalIndex = index+1 // MOP-468 Capitalize enum name
+                    let oldToken = bodyTokens[capitalIndex]
+                    bodyTokens.remove(at: capitalIndex)
+                    bodyTokens.insert(declaration.newToken(oldToken.kind, oldToken.value.firstUppercased), at: capitalIndex)
+                }
+            }
+        }
+        let reversed : [Int] = removeIndices.reversed()
+        for reversedIndex : Int in reversed {
+            bodyTokens.remove(at: reversedIndex)
+        }
+        
         if declaration.isOverride {
             // overridden methods can't have default args in kotlin:
             signatureTokens = removeDefaultArgsFromParameters(tokens:signatureTokens)
