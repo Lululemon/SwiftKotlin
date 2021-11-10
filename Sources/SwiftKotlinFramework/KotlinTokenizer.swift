@@ -806,6 +806,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "getInstance()"))
             } else if (token.value == "compare") {
                 removeIndicesLog.append((index, "compareTo"))
+            } else if (token.value == "compactMap") {
+                removeIndicesLog.append((index, "mapNotNull"))
             }
             
             
