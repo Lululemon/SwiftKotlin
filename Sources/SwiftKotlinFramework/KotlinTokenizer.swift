@@ -334,7 +334,6 @@ public class KotlinTokenizer: SwiftTokenizer {
     
     open override func tokenize(_ declaration: VariableDeclaration) -> [Token] {
         let spaceToken = declaration.newToken(.space, " ")
-        let mutabilityTokens = [declaration.newToken(.keyword, declaration.isReadOnly ? "val" : "var")]
         let attrsTokenGroups = declaration.attributes.map { tokenize($0, node: declaration) }
         var modifierTokenGroups = declaration.modifiers.map { tokenize($0, node: declaration) }
         var bodyTokens = tokenize(declaration.body, node: declaration)
@@ -399,6 +398,8 @@ public class KotlinTokenizer: SwiftTokenizer {
             bodyTokens.remove(at: reversedIndex)
         }
                 
+        let mutabilityTokens = [declaration.newToken(.keyword, declaration.isReadOnly || bodyTokens.contains(where: { $0.value == "mutableListOf" || $0.value == "mutableMapOf" }) ? "val" : "var")] // MOP-843 Mutable maps and lists to val
+        
         return [
             attrsTokenGroups.joined(token: spaceToken),
             modifierTokenGroups.joined(token: spaceToken),
@@ -722,7 +723,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             if isGenericTypeInfo {
                 entryTokens = entryTokens.replacing({ $0.value == "to"}, with: [expression.newToken(.delimiter, ",") ])
             }
-            return [expression.newToken(.identifier, "mapOf"),
+            return [expression.newToken(.identifier, "mutableMapOf"),
                 expression.newToken(.startOfScope, isGenericTypeInfo ? "<" : "(")] +
                 entryTokens +
                 [expression.newToken(.endOfScope, isGenericTypeInfo ? ">" : ")")]
