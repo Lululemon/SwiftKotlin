@@ -96,8 +96,8 @@ extension KotlinTokenizer {
             .prefix(with: lineBreak)
         let bodyTokens = [space, declaration.newToken(.startOfScope, "{"), lineBreak] +
             indent(comps) + [declaration.newToken(.delimiter, ";"), lineBreak] +
-            initFromRawTokens +
-            indent(otherMemberTokens).prefix(with: lineBreak) +
+            indent(otherMemberTokens) +
+            initFromRawTokens + // MOP-842
             [lineBreak, declaration.newToken(.endOfScope, "}")]
         return headTokens + bodyTokens
     }
