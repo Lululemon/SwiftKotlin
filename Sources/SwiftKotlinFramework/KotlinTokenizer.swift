@@ -150,7 +150,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             let companionTokens = indent(tokenizeCompanion(staticMembers, node: declaration))
                 .prefix(with: declaration.newToken(.linebreak, "\n"))
                 .suffix(with: declaration.newToken(.linebreak, "\n"))
-            tokens.insert(contentsOf: companionTokens, at: bodyStart! + 1)
+            tokens.insert(contentsOf: companionTokens, at: tokens.count - 1) // MOP-842
         }
 
         return tokens
@@ -220,7 +220,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             let companionTokens = indent(tokenizeCompanion(staticMembers, node: declaration))
                 .prefix(with: declaration.newToken(.linebreak, "\n"))
                 .suffix(with: declaration.newToken(.linebreak, "\n"))
-            tokens.insert(contentsOf: companionTokens, at: bodyStart + 1)
+            tokens.insert(contentsOf: companionTokens, at: tokens.count - 1) // MOP-842
         }
 
         return tokens
