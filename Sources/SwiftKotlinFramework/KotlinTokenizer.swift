@@ -1115,10 +1115,16 @@ public class KotlinTokenizer: SwiftTokenizer {
     // MARK: - Private helpers
 
     private func tokenizeDeclarationConditions(_ conditions: ConditionList, node: ASTNode) -> [Token] {
+        var newlinedDeclaration = false
         var declarationTokens = [Token]()
         for condition in conditions {
             switch condition {
             case .let, .var:
+                if !newlinedDeclaration {
+                    // MOP-844 ensure val declarations don't cut into comments
+                    declarationTokens.append(condition.newToken(.linebreak, "\n", node))
+                    newlinedDeclaration = true
+                }
                 declarationTokens.append(contentsOf:
                     super.tokenize(condition, node: node)
                         .replacing({ $0.value == "let" },
