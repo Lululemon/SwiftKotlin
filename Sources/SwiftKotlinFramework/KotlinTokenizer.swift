@@ -397,8 +397,17 @@ public class KotlinTokenizer: SwiftTokenizer {
         for reversedIndex : Int in reversed {
             bodyTokens.remove(at: reversedIndex)
         }
-                
-        let mutabilityTokens = [declaration.newToken(.keyword, declaration.isReadOnly || bodyTokens.contains(where: { $0.value == "mutableListOf" || $0.value == "mutableMapOf" }) ? "val" : "var")] // MOP-843 Mutable maps and lists to val
+           
+        // MOP-960 Convert Database query "clause" strings to StringBuilders.
+        let isClause = bodyTokens.first?.value.lowercased().range(of:"clause") != nil && bodyTokens.last?.value.hasPrefix("\"") == true && bodyTokens.last?.value.hasSuffix("\"") == true
+        
+        if (isClause) {
+            let stringBuilder = "StringBuilder(\(bodyTokens.last!.value))"
+            bodyTokens.removeLast()
+            bodyTokens.append(declaration.newToken(.keyword, stringBuilder))
+        }
+        
+        let mutabilityTokens = [declaration.newToken(.keyword, declaration.isReadOnly || isClause || bodyTokens.contains(where: { $0.value == "mutableListOf" || $0.value == "mutableMapOf" }) ? "val" : "var")] // MOP-843 Mutable maps and lists to val
         
         return [
             attrsTokenGroups.joined(token: spaceToken),
