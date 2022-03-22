@@ -838,8 +838,27 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "compareTo"))
             } else if (token.value == "compactMap") {
                 removeIndicesLog.append((index, "mapNotNull"))
+            } else if (token.value == "XCTAssert") {
+                removeIndicesLog.append((index, "assert"))
+            } else if (token.value == "XCTAssertTrue") {
+                removeIndicesLog.append((index, "assertTrue"))
+            } else if (token.value == "XCTAssertFalse") {
+                removeIndicesLog.append((index, "assertFalse"))
+            } else if (token.value == "XCTAssertEqual") {
+                removeIndicesLog.append((index, "assertEquals"))
+            } else if (token.value == "XCTFail") {
+                removeIndicesLog.append((index, "fail"))
+            } else if (token.value == "XCTAssertGreaterThan") {
+                removeIndicesLog.append((index, "assertGreaterThan"))
+            } else if (token.value == "XCTAssertNotNil") {
+                removeIndicesLog.append((index, "assertNotNull"))
+            } else if (token.value == "XCTAssertLessThan") {
+                removeIndicesLog.append((index, "assertLessThan"))
+            } else if (token.value == "XCTAssertLessThanOrEqual") {
+                removeIndicesLog.append((index, "assertLessThanOrEqual"))
+            } else if (token.value == "XCTAssertGreaterThanOrEqual") {
+                removeIndicesLog.append((index, "assertGreaterThanOrEqual"))
             }
-            
             
         }
         let reversedLog : [(Int, String)] = removeIndicesLog.reversed()
