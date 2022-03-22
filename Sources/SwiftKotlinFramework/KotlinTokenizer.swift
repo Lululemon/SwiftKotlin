@@ -1287,7 +1287,13 @@ public class KotlinTokenizer: SwiftTokenizer {
             let expression = String(remainingText[..<remainingText.index(remainingText.startIndex, offsetBy: i - 1)])
             let computedExpression = translate(content: expression).tokens?.joinedValues().replacingOccurrences(of: "\n", with: "")
             
-            interpolatedString += "${\(computedExpression ?? expression)}"
+            let expressionResult = computedExpression ?? expression // MOP-992: Only use String formatting braces when neccessary.
+            if (expressionResult.contains(".") || expressionResult.contains("(") || expressionResult.contains("?") || expressionResult.contains(":")) {
+                interpolatedString += "${\(expressionResult)}"
+            } else {
+                interpolatedString += "$\(expressionResult)"
+            }
+            
             remainingText = String(remainingText[remainingText.index(remainingText.startIndex, offsetBy: i)...])
         }
 
