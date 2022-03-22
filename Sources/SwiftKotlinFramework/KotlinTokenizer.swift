@@ -867,6 +867,16 @@ public class KotlinTokenizer: SwiftTokenizer {
             tokens.insert(expression.newToken(.identifier, tuple.1), at: tuple.0)
         }
         
+        // MOP-836: Remove blockingWaitForExpectations arguments.
+        let nameIndex = tokens.firstIndex(where: {$0.value == "blockingWaitForExpectations"})
+        if (nameIndex != nil) {
+            let startIndex = (tokens.firstIndex(where: {$0.kind == .startOfScope}) ?? 999) + 1
+            let endIndex = (tokens.firstIndex(where: {$0.kind == .endOfScope}) ?? -999) - 1
+            if (startIndex <= endIndex) {
+                tokens.removeSubrange(startIndex...endIndex)
+            }
+        }
+        
         return tokens
     }
     
