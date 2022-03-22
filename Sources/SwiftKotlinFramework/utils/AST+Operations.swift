@@ -9,7 +9,7 @@ import AST
 
 extension VariableDeclaration {
     var isStatic: Bool {
-        return modifiers.isStatic
+        return modifiers.isStatic || modifiers.isClass
     }
 
     var isImplicitlyUnwrapped: Bool {
@@ -60,7 +60,7 @@ extension VariableDeclaration {
 
 extension FunctionDeclaration {
     var isStatic: Bool {
-        return modifiers.isStatic
+        return modifiers.isStatic || modifiers.isClass
     }
     var isOverride: Bool {
         return modifiers.isOverride
@@ -126,6 +126,10 @@ extension Collection where Iterator.Element == DeclarationModifier {
         return self.contains(where: { $0.isStatic })
     }
     
+    var isClass: Bool {
+        return self.contains(where: { $0.isClass })
+    }
+    
     var isLazy: Bool {
         return self.contains(where: { $0.isLazy })
     }
@@ -147,6 +151,13 @@ extension DeclarationModifier {
     var isStatic: Bool {
         switch self {
         case .`static`: return true
+        default: return false
+        }
+    }
+    
+    var isClass: Bool {
+        switch self {
+        case .class: return true
         default: return false
         }
     }

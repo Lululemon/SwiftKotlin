@@ -144,6 +144,26 @@ public class KotlinTokenizer: SwiftTokenizer {
                 tokens.insert(contentsOf: constructorTokens, at: bodyIndex + 1)
                 bodyStart! += constructorTokens.count
             }
+            
+            // MOP-839: Properly translate BaseTest extension to constructor.
+            let baseTestIndex = tokens.firstIndex(where: { $0.value == "BaseTest"})
+            if (baseTestIndex != nil && baseTestIndex! < bodyIndex) {
+                let baseTestToken = tokens[baseTestIndex!]
+                tokens.remove(at: baseTestIndex!)
+                tokens.insert(declaration.newToken(baseTestToken.kind, "BaseTest()"), at: baseTestIndex!)
+            }
+            
+            // MOP-839: Insert junit class annotations.
+            let classindex = tokens.firstIndex(where: { $0.value == "class"})
+            if (classindex != nil && classindex! < bodyIndex) {
+                let annotationTokens = indent([declaration.newToken(.space, "@RunWith(UnitTestRunner::class)"),
+                                                declaration.newToken(.linebreak, "\n"),
+                                                declaration.newToken(.space, "@Config(sdk = [24], application = UnitTestController::class)"),
+                                                declaration.newToken(.linebreak, "\n")])
+                
+                tokens.insert(contentsOf: annotationTokens, at: classindex!)
+                bodyStart! += annotationTokens.count
+            }
         }
         
         if !staticMembers.isEmpty, bodyStart != nil {
@@ -289,7 +309,7 @@ public class KotlinTokenizer: SwiftTokenizer {
 
     open override func tokenize(_ modifier: DeclarationModifier, node: ASTNode) -> [Token] {
         switch modifier {
-        case .static, .unowned, .unownedSafe, .unownedUnsafe, .weak, .convenience, .dynamic, .lazy:
+        case .static, .unowned, .unownedSafe, .unownedUnsafe, .weak, .convenience, .dynamic, .lazy, .class:
             return []
         case .accessLevel(let mod) where mod.rawValue.contains("(set)"):
             return []
