@@ -151,19 +151,21 @@ public class KotlinTokenizer: SwiftTokenizer {
                 let baseTestToken = tokens[baseTestIndex!]
                 tokens.remove(at: baseTestIndex!)
                 tokens.insert(declaration.newToken(baseTestToken.kind, "BaseTest()"), at: baseTestIndex!)
+                
+                
+                // MOP-839: Insert junit class annotations.
+                let classindex = tokens.firstIndex(where: { $0.value == "class"})
+                if (classindex != nil && classindex! < bodyIndex) {
+                    let annotationTokens = indent([declaration.newToken(.space, "@RunWith(UnitTestRunner::class)"),
+                                                    declaration.newToken(.linebreak, "\n"),
+                                                    declaration.newToken(.space, "@Config(sdk = [24], application = UnitTestController::class)"),
+                                                    declaration.newToken(.linebreak, "\n")])
+                    
+                    tokens.insert(contentsOf: annotationTokens, at: classindex!)
+                    bodyStart! += annotationTokens.count
+                }
             }
             
-            // MOP-839: Insert junit class annotations.
-            let classindex = tokens.firstIndex(where: { $0.value == "class"})
-            if (classindex != nil && classindex! < bodyIndex) {
-                let annotationTokens = indent([declaration.newToken(.space, "@RunWith(UnitTestRunner::class)"),
-                                                declaration.newToken(.linebreak, "\n"),
-                                                declaration.newToken(.space, "@Config(sdk = [24], application = UnitTestController::class)"),
-                                                declaration.newToken(.linebreak, "\n")])
-                
-                tokens.insert(contentsOf: annotationTokens, at: classindex!)
-                bodyStart! += annotationTokens.count
-            }
         }
         
         if !staticMembers.isEmpty, bodyStart != nil {
