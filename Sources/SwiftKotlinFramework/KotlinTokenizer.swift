@@ -841,7 +841,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             } else if (token.value == "compactMap") {
                 removeIndicesLog.append((index, "mapNotNull"))
             } else if (token.value == "XCTAssert") {
-                removeIndicesLog.append((index, "assert"))
+                removeIndicesLog.append((index, "assertTrue"))
             } else if (token.value == "XCTAssertTrue") {
                 removeIndicesLog.append((index, "assertTrue"))
             } else if (token.value == "XCTAssertFalse") {
