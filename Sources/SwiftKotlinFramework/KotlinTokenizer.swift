@@ -64,12 +64,16 @@ public class KotlinTokenizer: SwiftTokenizer {
             // overridden methods can't have default args in kotlin:
             signatureTokens = removeDefaultArgsFromParameters(tokens:signatureTokens)
         }
-        let tokens = [
+        var tokens = [
             headTokens,
             [declaration.newToken(.identifier, declaration.name)] + signatureTokens,
             bodyTokens
         ].joined(token: declaration.newToken(.space, " "))
         .prefix(with: declaration.newToken(.linebreak, "\n"))
+        
+        if (declaration.name.textDescription.hasPrefix("test")) {
+            tokens = tokens.prefix(with: declaration.newToken(.comment, "@Test"))
+        }
         
         return tokens
     }
