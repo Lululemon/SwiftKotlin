@@ -835,7 +835,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             } else if (token.value == "forceEmptyToNil") {
                 removeIndicesLog.append((index, "forceEmptyToNull"))
             } else if (token.value == "emptyStringAsNilEquivalent") {
-                removeIndicesLog.append((index, "needsToUpdate"))
+                removeIndicesLog.append((index, "emptyStringAsNullEquivalent"))
             } else if (token.value == "isNilOrEmpty") {
                 removeIndicesLog.append((index, "isNullOrEmpty()"))
             } else if (token.value == "sharedInstance") {
