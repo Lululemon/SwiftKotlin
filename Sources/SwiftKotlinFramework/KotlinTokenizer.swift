@@ -20,9 +20,12 @@ public class KotlinTokenizer: SwiftTokenizer {
     }
 
     open override func tokenize(_ constant: ConstantDeclaration) -> [Token] {
+        // MOP-993: Replace assignment class
         return super.tokenize(constant)
             .replacing({ $0.value == "let"},
                        with: [constant.newToken(.keyword, "val")])
+            .replacing({ $0.value == "DispatchSemaphore"},
+                       with: [constant.newToken(.keyword, "Semaphore")])
     }
     
     open override func tokenize(_ declaration: FunctionDeclaration) -> [Token] {
@@ -844,6 +847,10 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "compareTo"))
             } else if (token.value == "compactMap") {
                 removeIndicesLog.append((index, "mapNotNull"))
+            } else if (token.value == "wait") {
+                removeIndicesLog.append((index, "acquire"))
+            } else if (token.value == "signal") {
+                removeIndicesLog.append((index, "release"))
             } else if (token.value == "XCTAssert") {
                 removeIndicesLog.append((index, "assertTrue"))
             } else if (token.value == "XCTAssertTrue") {
