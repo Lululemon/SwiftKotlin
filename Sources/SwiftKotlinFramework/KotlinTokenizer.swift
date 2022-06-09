@@ -21,11 +21,13 @@ public class KotlinTokenizer: SwiftTokenizer {
 
     open override func tokenize(_ constant: ConstantDeclaration) -> [Token] {
         // MOP-993: Replace assignment class
-        return super.tokenize(constant)
+        let tokens = super.tokenize(constant)
             .replacing({ $0.value == "let"},
                        with: [constant.newToken(.keyword, "val")])
             .replacing({ $0.value == "DispatchSemaphore"},
                        with: [constant.newToken(.keyword, "Semaphore")])
+        
+        return [constant.newToken(.linebreak, "\n")] + tokens
     }
     
     open override func tokenize(_ declaration: FunctionDeclaration) -> [Token] {
@@ -590,12 +592,12 @@ public class KotlinTokenizer: SwiftTokenizer {
     open override func tokenize(_ statement: GuardStatement) -> [Token] {
         let declarationTokens = tokenizeDeclarationConditions(statement.conditionList, node: statement)
         if statement.isUnwrappingGuard, let body = statement.codeBlock.statements.first {
-            return [
+            let tokens = [
                 Array(declarationTokens.dropLast()),
                 [statement.newToken(.symbol, "?:")],
-                tokenize(body),
-                [statement.newToken(.linebreak, "\n")], // MOP-499 newline
+                tokenize(body)
             ].joined(token: statement.newToken(.space, " "))
+            return tokens + [statement.newToken(.linebreak, "\n")] // MOP-499 newline
         } else {
             let invertedConditions = statement.conditionList.map(InvertedCondition.init)
             return declarationTokens + [
