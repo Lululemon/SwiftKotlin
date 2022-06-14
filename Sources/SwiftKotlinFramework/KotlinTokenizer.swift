@@ -892,6 +892,21 @@ public class KotlinTokenizer: SwiftTokenizer {
             }
         }
         
+        // MOP-1032: add typing to objectstArray function calls.
+        if tokens.contains(where: {$0.value == "objectsArray"}) {
+            var type : String? = nil
+            for (index, token) in tokens.enumerated() {
+                if (type == nil && token.kind == .identifier && !token.value.isEmpty &&    token.value[token.value.startIndex].isUppercase) {
+                    type = token.value
+                    continue
+                }
+                if let type = type, token.value == "objectsArray" {
+                    tokens.insert(expression.newToken(.keyword, "<\(type)>"), at: index + 1)
+                    break
+                }
+            }
+        }
+        
         return tokens
     }
     
