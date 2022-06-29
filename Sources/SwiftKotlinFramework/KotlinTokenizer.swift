@@ -554,12 +554,62 @@ public class KotlinTokenizer: SwiftTokenizer {
 
         // Simple enums (no tuple values)
         if !simpleCases.contains(where: { $0.tuple != nil }) {
+            
+            var finalTokens: [Token] = [] // MOP-1154: Proper enum naming.
+            
             let typeInheritanceList = declaration.typeInheritanceClause?.typeInheritanceList.nonEquatable
             if typeInheritanceList?.isEmpty == false {
-                return tokenizeSimpleValueEnum(declaration: declaration, simpleCases: simpleCases)
+                let tokens = tokenizeSimpleValueEnum(declaration: declaration, simpleCases: simpleCases)
+                
+                for (index, token) in tokens.enumerated() {
+                    let valid = index > 0 && index < (tokens.count - 1)
+                    if (token.kind == .delimiter && token.value == ",") {
+                        finalTokens.append(token)
+                        finalTokens.append(declaration.newToken(.linebreak, "\n "))
+                    } else if (token.kind == .identifier) {
+                        if (valid && tokens[index+1].value == "(" &&
+                            (tokens[index-1].kind == .space || tokens[index-1].kind == .linebreak ||
+                             tokens[index-1].kind == .indentation)) {
+                            finalTokens.append(declaration.newToken(.identifier, token.value.firstUppercased))
+                        } else {
+                            finalTokens.append(token)
+                        }
+                    }
+                    else {
+                        finalTokens.append(token)
+                    }
+                }
+                
             } else {
-                return tokenizeNoValueEnum(declaration: declaration, simpleCases: simpleCases)
+                let tokens = tokenizeNoValueEnum(declaration: declaration, simpleCases: simpleCases)
+                
+                for (index, token) in tokens.enumerated() {
+                    let valid = index > 0 && index < (tokens.count - 1)
+                    if (token.kind == .delimiter && token.value == ",") {
+                        finalTokens.append(token)
+                        finalTokens.append(declaration.newToken(.linebreak, "\n "))
+                    } else if (token.kind == .identifier) {
+                        if (valid && tokens[index+1].value == "(" &&
+                            (tokens[index-1].kind == .space || tokens[index-1].kind == .linebreak ||
+                             tokens[index-1].kind == .indentation)) {
+                            finalTokens.append(declaration.newToken(.identifier, token.value.firstUppercased))
+                        } else {
+                            finalTokens.append(token)
+                        }
+                    }
+                    else {
+                        finalTokens.append(token)
+                    }
+                }
             }
+            
+            if let caseIterableIndex = finalTokens.firstIndex(where: {$0.value == "CaseIterable"}) {
+                finalTokens.remove(at: caseIterableIndex)
+                finalTokens.remove(at: caseIterableIndex - 1)
+                finalTokens.remove(at: caseIterableIndex - 2)
+            }
+            
+            return finalTokens
         }
         // Tuples or inhertance required sealed classes
         else {
