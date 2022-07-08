@@ -887,7 +887,9 @@ public class KotlinTokenizer: SwiftTokenizer {
         for (index, token) in tokens.enumerated() {
             if (token.value == "Log"){
                 removeIndicesLog.append((index, "Logger"))
-            } else if (token.value == "forceEmptyToNil") {
+            } else if (token.value == "lowercased") {
+                removeIndicesLog.append((index, "lowercase"))
+            }else if (token.value == "forceEmptyToNil") {
                 removeIndicesLog.append((index, "forceEmptyToNull"))
             } else if (token.value == "emptyStringAsNilEquivalent") {
                 removeIndicesLog.append((index, "emptyStringAsNullEquivalent"))
