@@ -845,6 +845,10 @@ public class KotlinTokenizer: SwiftTokenizer {
             return super.tokenize(expression)
         }
     }
+    
+    open override func tokenize(_ expression: ImplicitMemberExpression) -> [Token] {
+        return [expression.newToken(.identifier, expression.identifier.description.firstUppercased)]
+    }
 
     open override func tokenize(_ expression: BinaryOperatorExpression) -> [Token] {
         let binaryOperator: Operator
