@@ -224,14 +224,12 @@ public class KotlinTokenizer: SwiftTokenizer {
                         .flatMap { tokenize($0) }
             } else {
                 let joinTokens = [
-                    declaration.newToken(.delimiter, ","),
-                    linebreak
+                    declaration.newToken(.delimiter, ",")
                 ]
                 declarationTokens = indent(
                     declarationMembers
                         .map { tokenize($0) }
                         .joined(tokens: joinTokens))
-                    .prefix(with: linebreak)
             }
             tokens.insert(contentsOf: declarationTokens
                 .prefix(with: declaration.newToken(.startOfScope, "("))
@@ -893,8 +891,12 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "Logger"))
             } else if (token.value == "lowercased") {
                 removeIndicesLog.append((index, "lowercase"))
-            }else if (token.value == "forceEmptyToNil") {
+            } else if (token.value == "forceEmptyToNil") {
                 removeIndicesLog.append((index, "forceEmptyToNull"))
+            } else if (token.value == "hasPrefix") {
+                removeIndicesLog.append((index, "startsWith"))
+            } else if (token.value == "hasSuffix") {
+                removeIndicesLog.append((index, "endsWith"))
             } else if (token.value == "emptyStringAsNilEquivalent") {
                 removeIndicesLog.append((index, "emptyStringAsNullEquivalent"))
             } else if (token.value == "isNilOrEmpty") {
@@ -907,6 +909,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "mapNotNull"))
             } else if (token.value == "wait") {
                 removeIndicesLog.append((index, "acquire"))
+            } else if (token.value == "removeValue") {
+                removeIndicesLog.append((index, "remove"))
             } else if (token.value == "signal") {
                 removeIndicesLog.append((index, "release"))
             } else if (token.value == "XCTAssert") {
