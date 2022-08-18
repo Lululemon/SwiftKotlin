@@ -250,21 +250,36 @@ public class KotlinTokenizer: SwiftTokenizer {
                         .joined(tokens: joinTokens))
             }
             
-            if codable {
-                print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+            if codable { // MOP-1356 Codable/Decodable calsses to Moshi Json.
+                var valIndex = -1
                 var removeIndicesLog = [(Int, String)]()
                 for (index, token) in declarationTokens.enumerated() {
-                    print("000000000000000000000000000000000000000000000000")
-                    print(token.value)
                     if token.value == "val" {
-                        removeIndicesLog.append((index, "@Json(name = \"carrier_moniker\") \(token.value)"))
+                        valIndex = index
+                    } else if valIndex != -1 && token.kind == .identifier {
+                        
+                        if token.value.contains(where: {$0.isUppercase}) {
+                            var snakeCase = ""
+                            for (_, c) in token.value.enumerated(){
+                                if c.isUppercase {
+                                    snakeCase += "_"
+                                    snakeCase += c.lowercased()
+                                }else {
+                                    snakeCase.append(c)
+                                }
+                            }
+                            
+                            removeIndicesLog.append((valIndex, "@Json(name = \"\(snakeCase))\") val"))
+                        }
+                        
+                        valIndex = -1
                     }
                 }
                 
                 let reversedLog : [(Int, String)] = removeIndicesLog.reversed()
                 for tuple in reversedLog {
                     declarationTokens.remove(at: tuple.0)
-                    declarationTokens.insert(declaration.newToken(.identifier, tuple.1), at: tuple.0)
+                    declarationTokens.insert(declaration.newToken(.keyword, tuple.1), at: tuple.0)
                 }
             }
             
