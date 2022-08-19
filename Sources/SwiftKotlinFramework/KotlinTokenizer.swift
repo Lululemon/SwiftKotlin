@@ -27,7 +27,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             .replacing({ $0.value == "DispatchSemaphore"},
                        with: [constant.newToken(.keyword, "Semaphore")])
         
-        return [constant.newToken(.linebreak, "\n")] + tokens
+        return tokens
     }
     
     open override func tokenize(_ declaration: FunctionDeclaration) -> [Token] {
