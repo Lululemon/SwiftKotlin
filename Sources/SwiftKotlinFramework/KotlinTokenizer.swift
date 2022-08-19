@@ -27,7 +27,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             .replacing({ $0.value == "DispatchSemaphore"},
                        with: [constant.newToken(.keyword, "Semaphore")])
         
-        return [constant.newToken(.linebreak, "\n")] + tokens
+        return tokens
     }
     
     open override func tokenize(_ declaration: FunctionDeclaration) -> [Token] {
@@ -212,13 +212,31 @@ public class KotlinTokenizer: SwiftTokenizer {
             members: otherMembers)
         newStruct.setSourceRange(declaration.sourceRange)
         
+        
         var tokens = super.tokenize(newStruct)
             .replacing({ $0.value == "struct"},
                        with: [declaration.newToken(.keyword, "data class")])
+        
+        var codable = false
+        if let typeInheritanceList = declaration.typeInheritanceClause?.typeInheritanceList.nonEquatable,
+            typeInheritanceList.isEmpty == false,
+            let bodyStart = tokens.firstIndex(where: { $0.value == "{"}) {
+            let clause = TypeInheritanceClause(classRequirement: false, typeInheritanceList: typeInheritanceList)
+            let inheritanceTokens = tokenize(clause, node: declaration)
+            
+            if inheritanceTokens.contains(where: {$0.value == "Codable" || $0.value == "Decodable"}) {
+                codable = true
+            }
+        }
+        
+        if codable {
+            tokens = tokens.prefix(with: declaration.newToken(.keyword, "@JsonClass(generateAdapter = true)"))
+                .prefix(with: declaration.newToken(.linebreak, "\n"))
+        }
 
         if !declarationMembers.isEmpty, let bodyStart = tokens.firstIndex(where: { $0.value == "{"}) {
             let linebreak = declaration.newToken(.linebreak, "\n")
-            let declarationTokens: [Token]
+            var declarationTokens: [Token]
             if declarationMembers.count == 1 {
                 declarationTokens = declarationMembers
                         .flatMap { tokenize($0) }
@@ -231,6 +249,40 @@ public class KotlinTokenizer: SwiftTokenizer {
                         .map { tokenize($0) }
                         .joined(tokens: joinTokens))
             }
+            
+            if codable { // MOP-1356 Codable/Decodable calsses to Moshi Json.
+                var valIndex = -1
+                var removeIndicesLog = [(Int, String)]()
+                for (index, token) in declarationTokens.enumerated() {
+                    if token.value == "val" {
+                        valIndex = index
+                    } else if valIndex != -1 && token.kind == .identifier {
+                        
+                        if token.value.contains(where: {$0.isUppercase}) {
+                            var snakeCase = ""
+                            for (_, c) in token.value.enumerated(){
+                                if c.isUppercase {
+                                    snakeCase += "_"
+                                    snakeCase += c.lowercased()
+                                }else {
+                                    snakeCase.append(c)
+                                }
+                            }
+                            
+                            removeIndicesLog.append((valIndex, "@Json(name = \"\(snakeCase))\") val"))
+                        }
+                        
+                        valIndex = -1
+                    }
+                }
+                
+                let reversedLog : [(Int, String)] = removeIndicesLog.reversed()
+                for tuple in reversedLog {
+                    declarationTokens.remove(at: tuple.0)
+                    declarationTokens.insert(declaration.newToken(.keyword, tuple.1), at: tuple.0)
+                }
+            }
+            
             tokens.insert(contentsOf: declarationTokens
                 .prefix(with: declaration.newToken(.startOfScope, "("))
                 .suffix(with: declaration.newToken(.endOfScope, ")")),
@@ -239,9 +291,11 @@ public class KotlinTokenizer: SwiftTokenizer {
 
         if let typeInheritanceList = declaration.typeInheritanceClause?.typeInheritanceList.nonEquatable,
             typeInheritanceList.isEmpty == false,
-            let bodyStart = tokens.firstIndex(where: { $0.value == "{"}) {
+            let bodyStart = tokens.firstIndex(where: { $0.value == "{"}),
+            codable == false{
             let clause = TypeInheritanceClause(classRequirement: false, typeInheritanceList: typeInheritanceList)
             let inheritanceTokens = tokenize(clause, node: declaration)
+            
             tokens.insert(contentsOf: inheritanceTokens, at: bodyStart - 1)
         }
 

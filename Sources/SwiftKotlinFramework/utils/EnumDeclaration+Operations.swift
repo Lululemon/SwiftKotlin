@@ -175,6 +175,7 @@ private extension KotlinTokenizer {
                 d.newToken(.delimiter, ":"),
                 space,
                 typeToken,
+                d.newToken(.symbol, "?"),
                 d.newToken(.endOfScope, ")"),
                 space,
                 d.newToken(.symbol, "="),
