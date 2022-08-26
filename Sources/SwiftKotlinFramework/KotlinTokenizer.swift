@@ -269,7 +269,7 @@ public class KotlinTokenizer: SwiftTokenizer {
                                 }
                             }
                             
-                            removeIndicesLog.append((valIndex, "@Json(name = \"\(snakeCase))\") val"))
+                         //   removeIndicesLog.append((valIndex, "@Json(name = \"\(snakeCase)\") val"))
                         }
                         
                         valIndex = -1
