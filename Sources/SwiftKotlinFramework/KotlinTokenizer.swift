@@ -1263,6 +1263,36 @@ public class KotlinTokenizer: SwiftTokenizer {
                 typeWithNames.append(TupleType.Element(type: element.type, name: .name("v\(index + 1)"), attributes: element.attributes, isInOutParameter: element.isInOutParameter))
             }
         }
+        
+        if typeWithNames.count == 2 { // MOP-1453: Pair type
+            var tokens : [Token] = []
+            tokens.append(type.newToken(.identifier, "Pair", node))
+            tokens.append(type.newToken(.startOfScope, "<", node))
+            let first = tokenize(typeWithNames.first!, node: node)
+            var firstTokens : [Token] = []
+            for token in first {
+                firstTokens.append(token)
+                if token.kind == .delimiter {
+                    firstTokens.removeAll()
+                }
+            }
+            tokens += firstTokens
+            tokens.append(type.newToken(.space, ", ", node))
+            let second = tokenize(typeWithNames.last!, node: node)
+            var secondTokens : [Token] = []
+            for token in second {
+                secondTokens.append(token)
+                if token.kind == .delimiter {
+                    secondTokens.removeAll()
+                }
+            }
+            tokens += secondTokens
+            tokens.append(type.newToken(.endOfScope, ">", node))
+
+            return tokens
+        }
+        
+        
         return type.newToken(.startOfScope, "(", node) +
             typeWithNames.map { tokenize($0, node: node) }.joined(token: type.newToken(.delimiter, ", ", node)) +
             type.newToken(.endOfScope, ")", node)
