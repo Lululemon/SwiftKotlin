@@ -212,11 +212,15 @@ public class KotlinTokenizer: SwiftTokenizer {
             members: otherMembers)
         newStruct.setSourceRange(declaration.sourceRange)
         
-        
         var tokens = super.tokenize(newStruct)
-            .replacing({ $0.value == "struct"},
-                       with: [declaration.newToken(.keyword, "data class")])
-        
+        if !declarationMembers.isEmpty || !otherMembers.isEmpty {
+            tokens = tokens.replacing({ $0.value == "struct"},
+                           with: [declaration.newToken(.keyword, "data class")])
+        } else {
+            tokens = tokens.replacing({ $0.value == "struct"},
+                           with: [declaration.newToken(.keyword, "class")])
+        }
+            
         var codable = false
         if let typeInheritanceList = declaration.typeInheritanceClause?.typeInheritanceList.nonEquatable,
             typeInheritanceList.isEmpty == false,
@@ -303,7 +307,10 @@ public class KotlinTokenizer: SwiftTokenizer {
             let companionTokens = indent(tokenizeCompanion(staticMembers, node: declaration))
                 .prefix(with: declaration.newToken(.linebreak, "\n"))
                 .suffix(with: declaration.newToken(.linebreak, "\n"))
+                .replacing({ $0.value == "val"},
+                           with: [declaration.newToken(.keyword, "const val")])
             tokens.insert(contentsOf: companionTokens, at: tokens.count - 1) // MOP-842
+                            
         }
 
         return tokens

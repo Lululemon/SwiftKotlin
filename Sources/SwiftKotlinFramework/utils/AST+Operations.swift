@@ -69,7 +69,11 @@ extension FunctionDeclaration {
 
 extension StructDeclaration.Member {
     var isStatic: Bool {
-        guard let declaration = self.declaration else { return false }
+        guard let declaration = self.declaration else {
+            return false }
+        if let constant = declaration as? ConstantDeclaration {
+            return constant.textDescription.contains("static")
+        }
         if let variable = declaration as? VariableDeclaration {
             return variable.isStatic
         }
