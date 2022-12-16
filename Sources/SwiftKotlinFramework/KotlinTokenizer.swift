@@ -963,7 +963,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             } else if (token.value == "isNilOrEmpty") {
                 removeIndicesLog.append((index, "isNullOrEmpty()"))
             } else if (token.value == "sharedInstance") {
-                removeIndicesLog.append((index, "getInstance()"))
+                removeIndicesLog.append((index, "instance"))
             } else if (token.value == "compare") {
                 removeIndicesLog.append((index, "compareTo"))
             } else if (token.value == "compactMap") {
