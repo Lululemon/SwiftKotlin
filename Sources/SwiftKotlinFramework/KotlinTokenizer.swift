@@ -827,7 +827,7 @@ public class KotlinTokenizer: SwiftTokenizer {
             if (checkedIdentifier == "isNilOrEmpty") {
                 checkedIdentifier = "isNullOrEmpty()"
             } else if (checkedIdentifier == "sharedInstance") {
-                checkedIdentifier = "getInstance()"
+                checkedIdentifier = "instance"
             }
             
             let postfixTokens = tokenize(postfixExpr)
