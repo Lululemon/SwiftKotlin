@@ -986,6 +986,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "fail"))
             } else if (token.value == "XCTAssertGreaterThan") {
                 removeIndicesLog.append((index, "assertGreaterThan"))
+            } else if (token.value == "XCTAssertNil") {
+                removeIndicesLog.append((index, "assertNull"))
             } else if (token.value == "XCTAssertNotNil") {
                 removeIndicesLog.append((index, "assertNotNull"))
             } else if (token.value == "XCTAssertLessThan") {
