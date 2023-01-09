@@ -972,6 +972,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "acquire"))
             } else if (token.value == "removeValue") {
                 removeIndicesLog.append((index, "remove"))
+            } else if (token.value == "replacingOccurrences") {
+                removeIndicesLog.append((index, "replace"))
             } else if (token.value == "signal") {
                 removeIndicesLog.append((index, "release"))
             } else if (token.value == "XCTAssert") {
