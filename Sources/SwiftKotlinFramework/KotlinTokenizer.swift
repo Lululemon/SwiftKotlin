@@ -942,7 +942,9 @@ public class KotlinTokenizer: SwiftTokenizer {
         }
         let reversed : [Int] = removeIndices.reversed()
         for reversedIndex : Int in reversed {
-            tokens.remove(at: reversedIndex)
+            if reversedIndex >= 0 {
+                tokens.remove(at: reversedIndex)
+            }
         }
         
         // MOP-468: "Log" to "Logger" Replace function names
