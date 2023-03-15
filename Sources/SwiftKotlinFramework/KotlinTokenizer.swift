@@ -954,6 +954,8 @@ public class KotlinTokenizer: SwiftTokenizer {
                 removeIndicesLog.append((index, "Logger"))
             } else if (token.value == "lowercased") {
                 removeIndicesLog.append((index, "lowercase"))
+            } else if (token.value == "uppercased") {
+                   removeIndicesLog.append((index, "uppercase"))
             } else if (token.value == "forceEmptyToNil") {
                 removeIndicesLog.append((index, "forceEmptyToNull"))
             } else if (token.value == "hasPrefix") {
