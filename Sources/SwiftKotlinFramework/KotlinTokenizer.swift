@@ -1044,13 +1044,14 @@ public class KotlinTokenizer: SwiftTokenizer {
             .replacing({ $0.value == ": " && $0.kind == .delimiter },
                        with: [expression.newToken(.delimiter, " = ", node)])
                 
-        // MOP-427: Remove specific argument names
+        // MOP-427, MOP-2010: Remove specific argument names
         var removeIndices = [Int]()
         for (index, token) in tokenizedArgument.enumerated() {
             if (token.value == " = " && token.kind == .delimiter &&
                 (tokenizedArgument[index - 1].value.starts(with: "for") ||
                  tokenizedArgument[index - 1].value.starts(with: "by") ||
                  tokenizedArgument[index - 1].value.starts(with: "with") ||
+                 tokenizedArgument[index - 1].value == "value" ||
                  tokenizedArgument[index - 1].value == "params" ||
                  tokenizedArgument[index - 1].value == "object")){
                 removeIndices.append(index-1)
